@@ -43,10 +43,10 @@ code drifts away from them. So comments have to earn their keep.
   from X`, `// re-track`, `// unchanged`.
 - **Commented-out dead code** — delete it; that's what version control is for.
 - **Decorative section dividers** that only echo the symbol names beneath them
-  (`// ==== Section ====`, `// ---- Captions ----` directly above the captions
+  (`// ==== Section ====`, `// ---- Billing ----` directly above the billing
   symbols). BUT keep a divider if it conveys a non-obvious grouping *rationale*:
-  `// shared corpus: public, api-key provenance` or `// existence-based fetch
-  state` earn their place; `// ---- Captions ----` does not. When borderline in
+  `// cached separately: user-scoped, invalidated on logout` or `// existence-based fetch
+  state` earn their place; `// ---- Billing ----` does not. When borderline in
   a large file, trim the divider down to its insight or drop it.
 - **JSDoc / param / return blocks that merely echo types** TypeScript (or the
   signature) already enforces.
@@ -57,7 +57,7 @@ If a comment is half-useful, cut it down to *only* the non-obvious part. Shorter
 is better, and the insight survives. Preserve meaning, references (issue
 numbers, URLs), and the exact wording of any caveat you keep.
 
-Worked example (from a real run):
+Worked example:
 
 Before:
 ```

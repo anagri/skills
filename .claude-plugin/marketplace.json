@@ -1,0 +1,44 @@
+{
+  "name": "anagri-skills",
+  "owner": {
+    "name": "anagri"
+  },
+  "metadata": {
+    "description": "Personal collection of Agent Skills for Claude Code",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "cloudflare-platform-architecture",
+      "description": "Architecture and project organization for complex Cloudflare apps in a pnpm/turbo monorepo — multiple Workers, SPA+API apps, Queues, Workflows, crons, D1/R2 shared across deployables.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./cloudflare-platform-architecture"
+      ]
+    },
+    {
+      "name": "comments-cleanup",
+      "description": "Sweep a codebase and remove comment noise while preserving the comments that earn their place, honoring the project's own comment policy.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./comments-cleanup"
+      ]
+    },
+    {
+      "name": "opencodewiki",
+      "description": "Generates and maintains a repository wiki that a coding agent reads before planning a change: what each feature does today, and the patterns the codebase already follows. Source-grounded, OKF v0.2, git-native. Requires the opencodewiki CLI (npm i -g opencodewiki).",
+      "source": "./opencodewiki",
+      "strict": false,
+      "version": "0.2.0"
+    },
+    {
+      "name": "retrospective",
+      "description": "Run an evidence-first retrospective on a solo, agent-assisted project. Collects git, prompt history, CI and plans deterministically, consolidates with subagents, then interviews you against the record — turning the corrections you keep repeating into rules, tools and hooks.",
+      "source": "./retrospective",
+      "strict": false,
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "name": "opencodewiki",
+  "version": "0.1.1",
+  "description": "Deterministic passes for an OKF v0.2 repository wiki: front-matter conformance, index and log generation, link and anchor validation, mermaid validation, and git-delta state. The non-model half of the opencodewiki Claude Code plugin.",
+  "keywords": [
+    "okf",
+    "open-knowledge-format",
+    "wiki",
+    "documentation",
+    "claude-code",
+    "agent-context"
+  ],
+  "license": "MIT",
+  "author": "anagri",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anagri/skills.git",
+    "directory": "opencodewiki-cli"
+  },
+  "type": "module",
+  "bin": {
+    "opencodewiki": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  },
+  "optionalDependencies": {
+    "jsdom": "^25.0.1",
+    "mermaid": "^11.4.1"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "retrospective",
+  "displayName": "retrospective",
+  "version": "0.1.0",
+  "description": "Run an evidence-first retrospective on a solo, agent-assisted project. Collects git, prompt history, CI and plans deterministically, extracts and consolidates with subagents, then interviews you against the record — and turns the result into rules, tools and hooks so the same correction is not typed again.",
+  "author": { "name": "anagri" },
+  "repository": "https://github.com/anagri/skills",
+  "license": "MIT",
+  "keywords": ["retrospective", "process-improvement", "solo-development", "agent-workflow", "continuous-improvement"]
+}

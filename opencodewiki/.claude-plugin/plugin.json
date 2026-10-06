@@ -1,0 +1,19 @@
+{
+  "name": "opencodewiki",
+  "displayName": "opencodewiki",
+  "version": "0.2.0",
+  "description": "Generates and maintains a repository wiki that a coding agent reads before planning a change: what each feature does today, and the patterns the codebase already follows. Source-grounded, OKF v0.2, git-native.",
+  "author": {
+    "name": "anagri"
+  },
+  "repository": "https://github.com/anagri/skills",
+  "license": "MIT",
+  "keywords": [
+    "wiki",
+    "documentation",
+    "okf",
+    "agent-context",
+    "architecture"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

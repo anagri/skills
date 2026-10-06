@@ -9,8 +9,10 @@ description: >-
   prune, trim, audit, or "apply a comment policy" to comments across files or a
   whole project; whenever they complain comments are noisy / redundant / out of
   date / "written by an AI"; or whenever they ask to enforce a minimal-comment
-  convention. For large sweeps (dozens+ of files) it fans out a parallel
-  Workflow so every file is judged consistently. It reads the project's own
+  convention. For large sweeps (dozens+ of files) it auto-detects the project's
+  code files and fans out a parallel Workflow, batching files by folder so each
+  agent handles a locality-grouped batch — far more token-efficient than one
+  agent per file, while keeping judgment consistent. It reads the project's own
   comment policy (CLAUDE.md / contributing guides) and lets that override the
   built-in defaults, so it respects house style instead of imposing one.
 ---
@@ -57,28 +59,46 @@ Briefly tell the user which policy you're applying (e.g. "Using your CLAUDE.md
 minimal-comment policy on top of the defaults") so they can correct you before a
 large sweep runs.
 
-## Step 2 — Survey the scale
+## Step 2 — Auto-detect the code files and survey the scale
 
-Find the target files and gauge how many actually contain comments — there's no
-point dispatching work for files with nothing to clean.
+This skill cleans **code comments**, so the targets are the project's
+source-code files — and you should discover them yourself rather than make the
+user hand you a glob. Detect the languages actually present (look at file
+extensions and any build manifests) and collect the code files that contain
+comments; there's no point dispatching work for files with nothing to clean.
 
 ```bash
-# adjust the root + extensions to the project
-grep -rl -E '//|/\*|#' --include='*.ts' --include='*.tsx' --include='*.py' \
-  <root> 2>/dev/null | grep -v node_modules | grep -v dist
+# Auto-detect: broad code extensions, then keep only files that have comments.
+# Prune the usual non-source dirs. Tune the extension set to what the repo uses.
+grep -rl -E '//|/\*|#' \
+  --include='*.ts'  --include='*.tsx' --include='*.js'  --include='*.jsx' \
+  --include='*.py'  --include='*.rb'  --include='*.rs'  --include='*.go' \
+  --include='*.java' --include='*.kt' --include='*.swift' --include='*.scala' \
+  --include='*.c'   --include='*.h'   --include='*.cc'  --include='*.cpp' \
+  --include='*.cs'  --include='*.php' --include='*.sh' \
+  <root> 2>/dev/null \
+  | grep -vE '/(node_modules|dist|build|vendor|target|\.git|\.next|out)/'
 ```
 
-Use the count to choose the mechanics in Step 3.
+Deliberately **don't** match docs/data files (`.md`, `.txt`, `.json`, `.yaml`) —
+their "comments" are usually real content, not code commentary. (As a safety
+net, each cleanup agent re-checks this per file in Step 3.) Write the surviving
+repo-relative paths to a file (one per line) for the generator, and use the
+count to choose the mechanics.
 
 ## Step 3 — Choose the mechanics by scale
 
 **A few files (roughly < 8):** just do it inline yourself. Read each file,
 apply the rubric with Edit, move on. No Workflow needed.
 
-**A large sweep (dozens+ of files):** fan out a parallel Workflow — one agent
-per file, each applying the *same* rubric. This is both faster and more
-consistent than grinding through them in one context, because every file gets a
-fresh, focused judgment against identical instructions.
+**A large sweep (dozens+ of files):** fan out a parallel Workflow, but the unit
+of work is a **batch of files that share a folder**, not a single file. Batching
+is the whole point here: comment cleanup is cheap per comment, so paying the
+per-agent context/setup cost once per file is wasteful. Grouping files by
+locality (same folder → same agent) shares project context, keeps the judgment
+bar consistent within a directory, and is dramatically more token-efficient. The
+generator targets ~30 files per batch (range 20–50): it merges small sibling
+folders up to the floor and splits any oversized folder into ~30-file chunks.
 
 Workflows spawn many agents and use significant tokens, so they require the
 user's explicit opt-in. If the user already asked for the sweep ("clean up all
@@ -86,8 +106,9 @@ the comments in apps/"), that's your opt-in. If scale is large but the request
 was vague, confirm first: tell them the file count and that you'll fan out a
 Workflow, and let them approve.
 
-To build the fan-out, use the bundled generator — it embeds the rubric and the
-file list into a ready-to-run Workflow script so you don't hand-assemble it:
+To build the fan-out, use the bundled generator — it does the folder-batching
+for you and embeds the rubric + batches into a ready-to-run Workflow script so
+you don't hand-assemble it:
 
 ```bash
 python3 scripts/build_workflow.py \
@@ -95,18 +116,20 @@ python3 scripts/build_workflow.py \
   --policy <abs path to the merged policy text you assembled> \
   --files-from <file with one repo-relative path per line> \
   --out /tmp/comments-cleanup.workflow.js
+  # optional tuning: --target 30 --min 20 --max 50
 ```
 
 Then launch it with the Workflow tool: `{ scriptPath: "/tmp/comments-cleanup.workflow.js" }`.
-The script embeds the file list as a literal (do **not** rely on passing the
-list through `args` — large arrays don't round-trip reliably), and each agent
-returns a structured summary (`removed` / `trimmed` / `kept` / `notes`) so you
-can report totals and notable keeps. See `references/workflow-notes.md` for the
-design rationale and gotchas.
+The script embeds the batches as a literal (do **not** rely on passing them
+through `args` — large arrays don't round-trip reliably). Each agent cleans
+every code file in its batch in place and, defensively, skips any path that
+turns out to be a docs/data file. The aim is the cleanup itself, so the script
+reports only the essentials: batches/files run and how many completed. See
+`references/workflow-notes.md` for the design rationale and gotchas.
 
 If Workflows aren't available in the environment, fall back to dispatching a
-handful of parallel subagents over batches of files with the same rubric, or do
-it inline — the rubric is what matters, not the harness.
+handful of parallel subagents over the same folder-batches with the same rubric,
+or do it inline — the rubric is what matters, not the harness.
 
 ## Step 4 — The hard rule: comments only
 
@@ -133,11 +156,12 @@ trunk-based workflow, honor it; **don't commit unless the user asks.**
 
 ## Step 6 — Report
 
-Summarize: files processed, comments removed / trimmed / kept, and a few
-*notable keeps* (the quirks/findings you deliberately preserved) so the user
-can sanity-check your judgment, not just the counts. Note whether it was a
-user-visible change (comment cleanup usually isn't, so usually no CHANGELOG
-entry — but follow the project's convention).
+Keep it short — the deliverable is the cleaned code, not a ledger. State how
+many files/batches were processed and that it's done, plus anything the user
+genuinely needs to act on (a batch that failed, a file you skipped as docs, a
+judgment call you're unsure about). Don't pad it with per-file comment counts.
+Note whether it was a user-visible change (comment cleanup usually isn't, so
+usually no CHANGELOG entry — but follow the project's convention).
 
 ## What "good" looks like
 
